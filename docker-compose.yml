@@ -1,0 +1,80 @@
+version: '3'
+networks:
+  dbcluster:
+    driver: bridge
+    ipam:
+      driver: default
+      config:
+        - subnet: 10.194.238.0/24
+
+services:
+  GTID_mysql-master:
+    image: 'percona:5.7-centos'
+    ports:
+      - '3306'
+    networks:
+      dbcluster:
+        ipv4_address: 10.194.238.2
+    volumes:
+      - ./mysql-dump/Test_Database.sql:/docker-entrypoint-initdb.d/Test_Database.sql
+      - ./mysql-dump/gtid_replica/master_gtid.cnf:/etc/my.cnf
+      - ./mysql-dump/init.sql:/docker-entrypoint-initdb.d/init.sql
+      - ./mysql-dump/gtid_replica/repl-master.sql:/docker-entrypoint-initdb.d/repl-master.sql     
+      - ./mysql-dump/root.cnf:/root/.my.cnf 
+    environment:
+      - MYSQL_ROOT_PASSWORD=root
+      - MYSQL_DATABASE=company
+  GTID_mysql-slave:
+    image: 'percona:5.7-centos'
+    ports:
+      - '3306'
+    depends_on:
+      - GTID_mysql-master
+    networks:
+      dbcluster:
+        ipv4_address: 10.194.238.3
+    volumes:
+      - ./mysql-dump/Test_Database.sql:/docker-entrypoint-initdb.d/Test_Database.sql
+      - ./mysql-dump/gtid_replica/slave_gtid.cnf:/etc/my.cnf
+      - ./mysql-dump/init.sql:/docker-entrypoint-initdb.d/init.sql
+      - ./mysql-dump/gtid_replica/repl-slave.sql:/docker-entrypoint-initdb.d/repl-slave.sql
+      - ./mysql-dump/root.cnf:/root/.my.cnf
+    environment:
+      - MYSQL_ROOT_PASSWORD=root
+      - MYSQL_DATABASE=company
+
+  mysql-master-replica:
+    image: 'percona:5.7-centos'
+    ports:
+      - '3306'
+    networks:
+      dbcluster:
+        ipv4_address: 10.194.238.4
+    volumes:
+      - ./mysql-dump/Test_Database.sql:/docker-entrypoint-initdb.d/Test_Database.sql
+      - ./mysql-dump/default_replica/master_replica.cnf:/etc/my.cnf
+      - ./mysql-dump/root.cnf:/root/.my.cnf
+    environment:
+      - MYSQL_ROOT_PASSWORD=root
+      - MYSQL_DATABASE=company
+  mysql-slave-replica:
+    image: 'percona:5.7-centos'
+    ports:
+      - '3306'
+    depends_on:
+      - mysql-master-replica
+    networks:
+      dbcluster:
+        ipv4_address: 10.194.238.5
+    environment:
+      - MYSQL_DATABASE=company
+      - MYSQL_SLAVE_PASSWORD=root
+      - MYSQL_MASTER_PASSWORD=root
+      - MYSQL_ROOT_PASSWORD=root
+      - MYSQL_REPLICATION_USER=repl
+      - MYSQL_REPLICATION_PASSWORD=repl
+    volumes:
+      - ./mysql-dump/Test_Database.sql:/docker-entrypoint-initdb.d/Test_Database.sql
+      - ./mysql-dump/default_replica/slave_replica.cnf:/etc/my.cnf
+      - ./mysql-dump/default_replica/mysql_connector.sh:/docker-entrypoint-initdb.d/q_mysql_connector.sh
+      - ./mysql-dump/root.cnf:/root/.my.cnf
