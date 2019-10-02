@@ -11,11 +11,6 @@ mysql --host 10.194.238.4 -uroot -p$MYSQL_MASTER_PASSWORD -e "CREATE USER '$MYSQ
 mysql --host 10.194.238.4 -uroot -p$MYSQL_MASTER_PASSWORD -e "GRANT REPLICATION SLAVE ON *.* TO '$MYSQL_REPLICATION_USER'@'%' IDENTIFIED BY '$MYSQL_REPLICATION_PASSWORD';"
 mysql --host 10.194.238.4 -uroot -p$MYSQL_MASTER_PASSWORD -e 'flush privileges;'
 
-
-mysql -uroot -p$MYSQL_MASTER_PASSWORD -e "CREATE USER '$MYSQL_REPLICATION_USER'@'%';"
-mysql -uroot -p$MYSQL_MASTER_PASSWORD -e "GRANT REPLICATION SLAVE ON *.* TO '$MYSQL_REPLICATION_USER'@'%' IDENTIFIED BY '$MYSQL_REPLICATION_PASSWORD';"
-mysql -uroot -p$MYSQL_MASTER_PASSWORD -e 'flush privileges;'
-
 Master_Position=$( mysql -h 10.194.238.4 -uroot -p$MYSQL_MASTER_PASSWORD -e 'show master status\G' | grep Position | sed -n -e 's/^.*: //p' )
 
 Master_File=$( mysql -h 10.194.238.4 -uroot -p$MYSQL_MASTER_PASSWORD -e 'show master status\G' | grep File | sed -n -e 's/^.*: //p' )

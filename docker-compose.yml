@@ -16,7 +16,6 @@ services:
       dbcluster:
         ipv4_address: 10.194.238.2
     volumes:
-      - ./mysql-dump/Test_Database.sql:/docker-entrypoint-initdb.d/Test_Database.sql
       - ./mysql-dump/gtid_replica/master_gtid.cnf:/etc/my.cnf
       - ./mysql-dump/init.sql:/docker-entrypoint-initdb.d/init.sql
       - ./mysql-dump/gtid_replica/repl-master.sql:/docker-entrypoint-initdb.d/repl-master.sql     
@@ -33,7 +32,6 @@ services:
       dbcluster:
         ipv4_address: 10.194.238.3
     volumes:
-      - ./mysql-dump/Test_Database.sql:/docker-entrypoint-initdb.d/Test_Database.sql
       - ./mysql-dump/gtid_replica/slave_gtid.cnf:/etc/my.cnf
       - ./mysql-dump/init.sql:/docker-entrypoint-initdb.d/init.sql
       - ./mysql-dump/gtid_replica/repl-slave.sql:/docker-entrypoint-initdb.d/repl-slave.sql
@@ -49,7 +47,6 @@ services:
       dbcluster:
         ipv4_address: 10.194.238.4
     volumes:
-      - ./mysql-dump/Test_Database.sql:/docker-entrypoint-initdb.d/Test_Database.sql
       - ./mysql-dump/default_replica/master_replica.cnf:/etc/my.cnf
     environment:
       - MYSQL_ROOT_PASSWORD=root
@@ -71,6 +68,5 @@ services:
       - MYSQL_REPLICATION_USER=repl
       - MYSQL_REPLICATION_PASSWORD=repl
     volumes:
-      - ./mysql-dump/Test_Database.sql:/docker-entrypoint-initdb.d/Test_Database.sql
       - ./mysql-dump/default_replica/slave_replica.cnf:/etc/my.cnf
       - ./mysql-dump/default_replica/mysql_connector.sh:/docker-entrypoint-initdb.d/q_mysql_connector.sh
