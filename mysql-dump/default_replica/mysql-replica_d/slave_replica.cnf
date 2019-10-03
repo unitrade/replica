@@ -9,11 +9,11 @@ symbolic-links=0
 log-error=/var/log/mysqld.log
 pid-file=/var/run/mysqld/mysqld.pid
 
-server-id=4
+server-id=8
 log-bin=/var/lib/mysql/mysql-bin
 binlog-do-db = company
 log-slave-updates=1
+binlog_format = mixed
 replicate-do-db = company
 relay-log = /var/lib/mysql/mysql-relay-bin
 relay-log-index = /var/lib/mysql/mysql-relay-bin.index
-read-only=1

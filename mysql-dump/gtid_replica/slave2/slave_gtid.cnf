@@ -1,7 +1,6 @@
 [mysqld]
 skip-host-cache
 skip-name-resolve
-
 datadir=/var/lib/mysql
 socket=/var/lib/mysql/mysql.sock
 secure-file-priv=/var/lib/mysql-files
@@ -11,7 +10,12 @@ log-error=/var/log/mysqld.log
 pid-file=/var/run/mysqld/mysqld.pid
 
 server-id=3
-log-bin=/var/lib/mysql/mysql-bin
+gtid-mode=ON
+log-bin
 binlog-do-db = company
-log-slave-updates=1
-replicate-do-db = company
+log-slave-updates
+enforce-gtid-consistency
+
+report-host=slave_gtid
+report-port=3306
+master-info-repository=TABLE

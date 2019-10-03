@@ -1,0 +1,18 @@
+[mysqld]
+skip-host-cache
+skip-name-resolve
+
+datadir=/var/lib/mysql
+socket=/var/lib/mysql/mysql.sock
+secure-file-priv=/var/lib/mysql-files
+user=mysql
+symbolic-links=0
+log-error=/var/log/mysqld.log
+pid-file=/var/run/mysqld/mysqld.pid
+
+server-id=5
+log-bin=/var/lib/mysql/mysql-bin
+binlog-do-db = company
+binlog_format = mixed
+log-slave-updates=1
+replicate-do-db = company

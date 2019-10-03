@@ -1,4 +1,5 @@
 version: '3'
+# Configure network for sandboxes
 networks:
   dbcluster:
     driver: bridge
@@ -8,6 +9,16 @@ networks:
         - subnet: 10.194.238.0/24
 
 services:
+
+#----------------------------------------------
+#                        S
+#                        |
+#                   S -- M -- S
+#                        |
+#                        S
+#----------------------------------------------              
+
+#GTID Master DB server          
   gtid_mysql-master:
     build: .
     ports:
@@ -16,13 +27,14 @@ services:
       dbcluster:
         ipv4_address: 10.194.238.2
     volumes:
-      - ./mysql-dump/gtid_replica/master_gtid.cnf:/etc/my.cnf
-      - ./mysql-dump/init.sql:/docker-entrypoint-initdb.d/init.sql
-      - ./mysql-dump/gtid_replica/repl-master.sql:/docker-entrypoint-initdb.d/repl-master.sql     
+      - ./mysql-dump/gtid_replica/master/master_gtid.cnf:/etc/my.cnf
+      - ./mysql-dump/gtid_replica/master/repl-master.sql:/docker-entrypoint-initdb.d/repl-master.sql     
     environment:
       - MYSQL_ROOT_PASSWORD=root
       - MYSQL_DATABASE=company
-  gtid_mysql-slave:
+
+#GTID Slave 1 DB server
+  gtid_mysql-slave1:
     build: .
     ports:
       - '3306'
@@ -32,34 +44,74 @@ services:
       dbcluster:
         ipv4_address: 10.194.238.3
     volumes:
-      - ./mysql-dump/gtid_replica/slave_gtid.cnf:/etc/my.cnf
-      - ./mysql-dump/init.sql:/docker-entrypoint-initdb.d/init.sql
+      - ./mysql-dump/gtid_replica/slave1/slave_gtid.cnf:/etc/my.cnf
       - ./mysql-dump/gtid_replica/repl-slave.sql:/docker-entrypoint-initdb.d/repl-slave.sql
     environment:
       - MYSQL_ROOT_PASSWORD=root
       - MYSQL_DATABASE=company
 
-  mysql-master-replica:
-    build: .
-    ports:
-      - '3306'
-    networks:
-      dbcluster:
-        ipv4_address: 10.194.238.4
-    volumes:
-      - ./mysql-dump/default_replica/master_replica.cnf:/etc/my.cnf
-    environment:
-      - MYSQL_ROOT_PASSWORD=root
-      - MYSQL_DATABASE=company
-  mysql-slave-replica:
+#GTID Slave 2 DB server
+  gtid_mysql-slave2:
     build: .
     ports:
       - '3306'
     depends_on:
-      - mysql-master-replica
+      - gtid_mysql-master
+    networks:
+      dbcluster:
+        ipv4_address: 10.194.238.4
+    volumes:
+      - ./mysql-dump/gtid_replica/slave2/slave_gtid.cnf:/etc/my.cnf
+      - ./mysql-dump/gtid_replica/repl-slave.sql:/docker-entrypoint-initdb.d/repl-slave.sql
+    environment:
+      - MYSQL_ROOT_PASSWORD=root
+      - MYSQL_DATABASE=company
+
+#GTID Slave 3 DB server
+  gtid_mysql-slave3:
+    build: .
+    ports:
+      - '3306'
+    depends_on:
+      - gtid_mysql-master
     networks:
       dbcluster:
         ipv4_address: 10.194.238.5
+    volumes:
+      - ./mysql-dump/gtid_replica/slave3/slave_gtid.cnf:/etc/my.cnf
+      - ./mysql-dump/gtid_replica/repl-slave.sql:/docker-entrypoint-initdb.d/repl-slave.sql
+    environment:
+      - MYSQL_ROOT_PASSWORD=root
+      - MYSQL_DATABASE=company
+
+#---------------------------------------------------------
+#                 Replica A -> B -> C -> D            
+#---------------------------------------------------------
+
+# DB server A
+  mysql-replica_a:
+    build: .
+    ports:
+      - '3306'
+    networks:
+      dbcluster:
+        ipv4_address: 10.194.238.7
+    volumes:
+      - ./mysql-dump/default_replica/mysql-replica_a/master_replica.cnf:/etc/my.cnf
+    environment:
+      - MYSQL_ROOT_PASSWORD=root
+      - MYSQL_DATABASE=company
+
+# DB server B
+  mysql-replica_b:
+    build: .
+    ports:
+      - '3306'
+    depends_on:
+      - mysql-replica_a
+    networks:
+      dbcluster:
+        ipv4_address: 10.194.238.8
     environment:
       - MYSQL_DATABASE=company
       - MYSQL_SLAVE_PASSWORD=root
@@ -68,5 +120,48 @@ services:
       - MYSQL_REPLICATION_USER=repl
       - MYSQL_REPLICATION_PASSWORD=repl
     volumes:
-      - ./mysql-dump/default_replica/slave_replica.cnf:/etc/my.cnf
-      - ./mysql-dump/default_replica/mysql_connector.sh:/docker-entrypoint-initdb.d/q_mysql_connector.sh
+      - ./mysql-dump/default_replica/mysql-replica_b/slave_replica.cnf:/etc/my.cnf
+      - ./mysql-dump/default_replica/mysql-replica_b/mysql_connector.sh:/docker-entrypoint-initdb.d/q_mysql_connector.sh
+
+# DB server C
+  mysql-replica_c:
+    build: .
+    ports:
+      - '3306'
+    depends_on:
+      - mysql-replica_b
+    networks:
+      dbcluster:
+        ipv4_address: 10.194.238.9
+    environment:
+      - MYSQL_DATABASE=company
+      - MYSQL_SLAVE_PASSWORD=root
+      - MYSQL_MASTER_PASSWORD=root
+      - MYSQL_ROOT_PASSWORD=root
+      - MYSQL_REPLICATION_USER=repl
+      - MYSQL_REPLICATION_PASSWORD=repl
+    volumes:
+      - ./mysql-dump/default_replica/mysql-replica_c/slave_replica.cnf:/etc/my.cnf
+      - ./mysql-dump/default_replica/mysql-replica_c/mysql_connector.sh:/docker-entrypoint-initdb.d/q_mysql_connector.sh
+
+# DB server D
+  mysql-replica_d:
+    build: .
+    ports:
+      - '3306'
+    depends_on:
+      - mysql-replica_c
+    networks:
+      dbcluster:
+        ipv4_address: 10.194.238.10
+    environment:
+      - MYSQL_DATABASE=company
+      - MYSQL_SLAVE_PASSWORD=root
+      - MYSQL_MASTER_PASSWORD=root
+      - MYSQL_ROOT_PASSWORD=root
+      - MYSQL_REPLICATION_USER=repl
+      - MYSQL_REPLICATION_PASSWORD=repl
+    volumes:
+      - ./mysql-dump/default_replica/mysql-replica_d/slave_replica.cnf:/etc/my.cnf
+      - ./mysql-dump/default_replica/mysql-replica_d/mysql_connector.sh:/docker-entrypoint-initdb.d/q_mysql_connector.sh
+        
