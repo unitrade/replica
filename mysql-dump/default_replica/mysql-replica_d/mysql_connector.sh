@@ -2,7 +2,7 @@
 
 echo "Waiting for mysql to get up"
 # Give 9 seconds for master and slave to come up
-sleep 9
+sleep 12
 
 echo "Create MySQL Servers (master / slave replica)"
 echo "-----------------"
